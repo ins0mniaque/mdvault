@@ -21,24 +21,49 @@ func NewVault(dir string) *Vault {
 	}
 }
 
-func (v *Vault) Dir() string {
-	return v.dir
+func (vault *Vault) Dir() string {
+	return vault.dir
 }
 
-func (v *Vault) Entries() map[string]*Entry {
-	entries := make(map[string]*Entry, len(v.entries))
-	for k, v := range v.entries {
-		entries[k] = NewEntry(v)
+func (vault *Vault) Backlinks() map[string][]string {
+	entries := make(map[string][]string, len(vault.entries))
+
+	for link := range vault.entries {
+		backlinks := make([]string, 0)
+		for backlink, metadata := range vault.entries {
+			if metadata == nil {
+				continue
+			}
+
+			if _, ok := metadata.Links[link]; ok {
+				backlinks = append(backlinks, backlink)
+			}
+		}
+
+		entries[link] = backlinks
 	}
 
 	return entries
 }
 
-func (v *Vault) IsLoaded() bool {
-	return v.entries != nil
+func (vault *Vault) Entries() map[string]*Entry {
+	backlinks := vault.Backlinks()
+	entries := make(map[string]*Entry, len(vault.entries))
+
+	for k, v := range vault.entries {
+		entry := NewEntry(v)
+		entry.Backlinks = backlinks[k]
+		entries[k] = entry
+	}
+
+	return entries
 }
 
-func (v *Vault) Load() error {
+func (vault *Vault) IsLoaded() bool {
+	return vault.entries != nil
+}
+
+func (vault *Vault) Load() error {
 	var mutex sync.Mutex
 	var wg sync.WaitGroup
 
@@ -46,11 +71,11 @@ func (v *Vault) Load() error {
 
 	parser, err := config.ConfigureParser()
 	if err != nil {
-		log.Printf("Error configuring parser for vault %s: %v", v.dir, err)
+		log.Printf("Error configuring parser for vault %s: %v", vault.dir, err)
 		return err
 	}
 
-	err = filepath.WalkDir(v.dir, func(path string, entry fs.DirEntry, err error) error {
+	err = filepath.WalkDir(vault.dir, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -59,7 +84,7 @@ func (v *Vault) Load() error {
 			return err
 		}
 
-		key, err := filepath.Rel(v.dir, path)
+		key, err := filepath.Rel(vault.dir, path)
 		if err != nil {
 			key = path
 		}
@@ -89,12 +114,12 @@ func (v *Vault) Load() error {
 	})
 
 	if err != nil {
-		log.Printf("Error loading vault %s: %v", v.dir, err)
+		log.Printf("Error loading vault %s: %v", vault.dir, err)
 	}
 
 	wg.Wait()
 
-	v.entries = files
+	vault.entries = files
 
 	return err
 }
