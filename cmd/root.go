@@ -61,7 +61,6 @@ func findVaultDir(path string, configDirName string) string {
 		}
 
 		parentPath := filepath.Dir(path)
-		println(parentPath)
 		if parentPath == path {
 			break
 		}

@@ -1,8 +1,9 @@
 package goldmark
 
 import (
-	"mdvault/parser"
+	"mdvault/markdown"
 	"net/url"
+	"path"
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
@@ -14,11 +15,11 @@ import (
 	"go.abhg.dev/goldmark/wikilink"
 )
 
-type GoldmarkParser struct {
+type Parser struct {
 	md goldmark.Markdown
 }
 
-func (r GoldmarkParser) Parse(source []byte) (*parser.Metadata, error) {
+func (r Parser) Parse(source []byte) (*markdown.Metadata, error) {
 	document, source, err := parseMarkdown(source, r.md)
 	if err != nil {
 		return nil, err
@@ -32,13 +33,13 @@ func (r GoldmarkParser) Parse(source []byte) (*parser.Metadata, error) {
 	return metadata, nil
 }
 
-func Create() (parser.Parser, error) {
-	return GoldmarkParser{md: goldmark.New(
+func NewParser() markdown.Parser {
+	return Parser{md: goldmark.New(
 		goldmark.WithExtensions(
 			extension.TaskList,
 			&frontmatter.Extender{Mode: frontmatter.SetMetadata},
 			&hashtag.Extender{Variant: hashtag.ObsidianVariant},
-			&wikilink.Extender{}))}, nil
+			&wikilink.Extender{}))}
 }
 
 func parseMarkdown(source []byte, md goldmark.Markdown) (*ast.Document, []byte, error) {
@@ -49,14 +50,27 @@ func parseMarkdown(source []byte, md goldmark.Markdown) (*ast.Document, []byte, 
 	return doc, source, nil
 }
 
-func extractMetadata(document *ast.Document, source []byte) (*parser.Metadata, error) {
-	metadata := parser.Metadata{
-		Names:      make(map[string]struct{}),
-		Links:      make(map[string]struct{}),
-		Tags:       make(map[string]struct{}),
-		Tasks:      make(map[string]struct{}),
-		Properties: document.Meta(),
+func parseLink(source []byte) string {
+	u, err := url.Parse(string(source))
+	if err != nil || u.IsAbs() {
+		return ""
 	}
+
+	u.Fragment = ""
+	link := u.String()
+	if link == "" {
+		return ""
+	}
+
+	if path.Ext(link) == "" {
+		link = link + ".md"
+	}
+	return link
+}
+
+func extractMetadata(document *ast.Document, source []byte) (*markdown.Metadata, error) {
+	metadata := markdown.Metadata{}
+	metadata.SetProperties(document.Meta())
 
 	title := ""
 
@@ -69,17 +83,14 @@ func extractMetadata(document *ast.Document, source []byte) (*parser.Metadata, e
 		}
 
 		if n, ok := node.(*ast.Link); ok && enter {
-			u, _ := url.Parse(string(n.Destination))
-			u.Fragment = ""
-			link := u.String()
-			if len(link) > 0 {
+			if link := parseLink(n.Destination); link != "" {
 				metadata.AddLink(link)
 			}
 		}
 
 		if n, ok := node.(*wikilink.Node); ok && enter {
-			if len(n.Target) > 0 {
-				metadata.AddLink(string(n.Target))
+			if link := parseLink(n.Target); link != "" {
+				metadata.AddLink(link)
 			}
 		}
 
@@ -97,23 +108,6 @@ func extractMetadata(document *ast.Document, source []byte) (*parser.Metadata, e
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: Move to entry
-	extractTags := func(key string) {
-		if metatags, ok := metadata.Properties[key].([]interface{}); ok {
-			for _, v := range metatags {
-				if s, ok := v.(string); ok {
-					metadata.AddTag(s)
-				}
-			}
-		}
-	}
-
-	extractTags("Tags")
-	extractTags("tags")
-
-	// TODO: Extract name, aliases, title and id into names
-	//       e.g. alias, ALIAS and ALIASES, date, time
 
 	return &metadata, nil
 }

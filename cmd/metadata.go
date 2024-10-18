@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"mdvault/vault"
 
 	"github.com/spf13/cobra"
@@ -12,7 +13,14 @@ var metadataCmd = &cobra.Command{
 	Short:   "Extract vault metadata",
 	Long:    "Extract vault metadata",
 	Run: func(cmd *cobra.Command, args []string) {
-		vault.Extract(vaultDir)
+		v := vault.NewVault(vaultDir)
+		v.Load()
+
+		for path, metadata := range v.Files() {
+			if metadata != nil {
+				fmt.Println(path, *metadata)
+			}
+		}
 	},
 }
 

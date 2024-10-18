@@ -1,11 +1,11 @@
 package config
 
 import (
-	"mdvault/parser"
-	"mdvault/parser/goldmark"
+	"mdvault/markdown"
+	"mdvault/markdown/goldmark"
 )
 
 // TODO: Expose options through config
-func ConfigureParser() (parser.Parser, error) {
-	return goldmark.Create()
+func ConfigureParser() (markdown.Parser, error) {
+	return goldmark.NewParser(), nil
 }

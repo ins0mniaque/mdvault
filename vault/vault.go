@@ -1,83 +1,132 @@
 package vault
 
 import (
-	"fmt"
 	"io/fs"
 	"log"
 	"mdvault/config"
-	"mdvault/parser"
+	"mdvault/markdown"
 	"os"
 	"path/filepath"
 	"sync"
 )
 
 type Vault struct {
-	Files     map[string]*parser.Metadata
-	BackLinks map[string]*parser.Metadata
-	Tagged    map[string][]*parser.Metadata
+	dir   string
+	files map[string]*markdown.Metadata
 }
 
-func (v *Vault) Update(metadata *parser.Metadata) {
-	v.Files[metadata.Path] = metadata
-}
-
-func Extract(root string) {
-	parser, err := config.ConfigureParser()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = walkMarkdownFiles(root, func(filename string) {
-		source, err := os.ReadFile(filename)
-		if err != nil {
-			log.Printf("Error reading file %s: %v", filename, err)
-			return
-		}
-
-		metadata, err := parser.Parse(source)
-		if err != nil {
-			log.Printf("Error extracting metadata for file %s: %v", filename, err)
-			return
-		}
-
-		path, err := filepath.Rel(root, filename)
-		if err != nil {
-			path = filename
-		}
-
-		metadata.SetPath(path)
-
-		fmt.Println(metadata)
-	})
-
-	if err != nil {
-		log.Fatal(err)
+func NewVault(dir string) *Vault {
+	return &Vault{
+		dir: dir,
 	}
 }
 
-func walkMarkdownFiles(root string, fn func(filename string)) error {
+func (v *Vault) Dir() string {
+	return v.dir
+}
+
+func (v *Vault) Files() map[string]*markdown.Metadata {
+	return v.files
+}
+
+func (v *Vault) IsLoaded() bool {
+	return v.files != nil
+}
+
+func (v *Vault) Load() error {
+	var mutex sync.Mutex
 	var wg sync.WaitGroup
 
-	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+	files := make(map[string]*markdown.Metadata)
+
+	parser, err := config.ConfigureParser()
+	if err != nil {
+		log.Printf("Error configuring parser for vault %s: %v", v.dir, err)
+		return err
+	}
+
+	err = filepath.WalkDir(v.dir, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
-			log.Printf("Error walking path %s: %v", path, err)
 			return err
 		}
 
-		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".md" {
+		if skip, err := shouldSkip(entry); skip {
+			return err
+		}
+
+		key, err := filepath.Rel(v.dir, path)
+		if err != nil {
+			key = path
+		}
+
+		ext := filepath.Ext(path)
+		if ext == ".md" || ext == ".MD" {
 			wg.Add(1)
 
-			go func(filename string) {
+			go func(markdownPath string) {
 				defer wg.Done()
 
-				fn(filename)
+				metadata := parse(parser, key, markdownPath)
+
+				mutex.Lock()
+				defer mutex.Unlock()
+
+				files[key] = metadata
 			}(path)
+		} else {
+			mutex.Lock()
+			defer mutex.Unlock()
+
+			files[key] = nil
 		}
 
 		return nil
 	})
 
+	if err != nil {
+		log.Printf("Error loading vault %s: %v", v.dir, err)
+	}
+
 	wg.Wait()
 
+	v.files = files
+
 	return err
+}
+
+func parse(parser markdown.Parser, key string, path string) *markdown.Metadata {
+	source, err := os.ReadFile(path)
+	if err != nil {
+		log.Printf("Error reading file %s: %v", key, err)
+		return nil
+	}
+
+	metadata, err := parser.Parse(source)
+	if err != nil {
+		log.Printf("Error extracting metadata for file %s: %v", key, err)
+		return nil
+	}
+
+	metadata.ExtractCommonProperties()
+	metadata.SetPath(key)
+
+	return metadata
+}
+
+func shouldSkip(entry fs.DirEntry) (bool, error) {
+	name := entry.Name()
+
+	if entry.IsDir() {
+		if name[0] == '.' {
+			return true, filepath.SkipDir
+		}
+
+		return true, nil
+	}
+
+	if name[0] == '.' {
+		return true, nil
+	}
+
+	return false, nil
 }
