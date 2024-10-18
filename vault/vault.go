@@ -11,8 +11,8 @@ import (
 )
 
 type Vault struct {
-	dir   string
-	files map[string]*markdown.Metadata
+	dir     string
+	entries map[string]*markdown.Metadata
 }
 
 func NewVault(dir string) *Vault {
@@ -25,12 +25,17 @@ func (v *Vault) Dir() string {
 	return v.dir
 }
 
-func (v *Vault) Files() map[string]*markdown.Metadata {
-	return v.files
+func (v *Vault) Entries() map[string]*Entry {
+	entries := make(map[string]*Entry, len(v.entries))
+	for k, v := range v.entries {
+		entries[k] = NewEntry(v)
+	}
+
+	return entries
 }
 
 func (v *Vault) IsLoaded() bool {
-	return v.files != nil
+	return v.entries != nil
 }
 
 func (v *Vault) Load() error {
@@ -89,7 +94,7 @@ func (v *Vault) Load() error {
 
 	wg.Wait()
 
-	v.files = files
+	v.entries = files
 
 	return err
 }

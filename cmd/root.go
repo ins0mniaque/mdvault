@@ -25,7 +25,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initVault)
 
-	rootCmd.PersistentFlags().StringVar(&vaultDir, "vault", "", "vault directory")
+	rootCmd.PersistentFlags().StringVarP(&vaultDir, "vault", "v", "", "vault directory")
 }
 
 func initVault() {

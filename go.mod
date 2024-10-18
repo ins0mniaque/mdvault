@@ -8,6 +8,7 @@ require (
 	go.abhg.dev/goldmark/frontmatter v0.2.0
 	go.abhg.dev/goldmark/hashtag v0.3.1
 	go.abhg.dev/goldmark/wikilink v0.5.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -16,5 +17,4 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
