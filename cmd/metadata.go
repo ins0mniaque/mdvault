@@ -12,7 +12,7 @@ var metadataCmd = &cobra.Command{
 	Short:   "Extract vault metadata",
 	Long:    "Extract vault metadata",
 	Run: func(cmd *cobra.Command, args []string) {
-		vault.Parse(".")
+		vault.Parse(vaultDir)
 	},
 }
 

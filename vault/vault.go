@@ -204,7 +204,12 @@ func Parse(root string) {
 			return
 		}
 
-		metadata.SetPath(filename)
+		path, err := filepath.Rel(root, filename)
+		if err != nil {
+			path = filename
+		}
+
+		metadata.SetPath(path)
 
 		fmt.Println(metadata)
 	})
