@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var orphanConfirm bool
-var orphanDelete bool
+var orphansConfirm bool
+var orphansDelete bool
 
-var orphanCmd = &cobra.Command{
-	Use:     "orphan",
-	Aliases: []string{"orphans", "orphaned"},
+var orphansCmd = &cobra.Command{
+	Use:     "orphans",
+	Aliases: []string{"orphan", "orphaned"},
 	Short:   "List orphan files",
 	Long:    "List and optionally delete orphan files",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -38,12 +38,12 @@ var orphanCmd = &cobra.Command{
 			println(path)
 		}
 
-		if orphanDelete && len(orphans) > 0 {
-			if orphanConfirm && !confirm(fmt.Sprintf("\nDelete %d orphans?", len(orphans))) {
+		if orphansDelete && len(orphans) > 0 {
+			if orphansConfirm && !confirm(fmt.Sprintf("\nDelete %d orphan files?", len(orphans))) {
 				return
 			}
 
-			fmt.Printf("\nDeleting %d orphans...\n", len(orphans))
+			fmt.Printf("\nDeleting %d orphan files...\n", len(orphans))
 
 			for _, path := range orphans {
 				err := os.Remove(filepath.Join(v.Dir(), path))
@@ -52,20 +52,20 @@ var orphanCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Printf("\n%d orphans deleted\n", len(orphans))
+			fmt.Printf("\n%d orphan files deleted\n", len(orphans))
 		} else if len(orphans) > 0 {
-			fmt.Printf("\n%d orphans\n", len(orphans))
+			fmt.Printf("\n%d orphan files\n", len(orphans))
 		} else {
-			println("No orphans")
+			println("No orphan files")
 		}
 	},
 }
 
 func init() {
-	orphanCmd.Flags().BoolVarP(&orphanConfirm, "confirm", "c", true, "Confirm orphan files deletion")
-	orphanCmd.Flags().BoolVarP(&orphanDelete, "delete", "d", false, "Delete orphan files")
+	orphansCmd.Flags().BoolVarP(&orphansConfirm, "confirm", "c", true, "Confirm orphan files deletion")
+	orphansCmd.Flags().BoolVarP(&orphansDelete, "delete", "d", false, "Delete orphan files")
 
-	rootCmd.AddCommand(orphanCmd)
+	rootCmd.AddCommand(orphansCmd)
 }
 
 func confirm(prompt string) bool {
