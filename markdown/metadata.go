@@ -1,14 +1,20 @@
 package markdown
 
-import "time"
+import (
+	"net/url"
+	"path"
+	"time"
+)
 
 type Metadata struct {
-	Names      map[string]struct{}    `json:"names"`
-	Dates      map[time.Time]struct{} `json:"dates"`
-	Links      map[string]struct{}    `json:"links"`
-	Tags       map[string]struct{}    `json:"tags"`
-	Tasks      map[string]struct{}    `json:"tasks"`
-	Properties map[string]interface{} `json:"properties"`
+	Names      map[string]struct{}
+	Dates      map[time.Time]struct{}
+	Links      map[string]struct{}
+	URLs       map[string]struct{}
+	Sections   map[string]struct{}
+	Tags       map[string]struct{}
+	Tasks      map[string]struct{}
+	Properties map[string]interface{}
 }
 
 func (metadata *Metadata) AddName(name string) {
@@ -27,12 +33,49 @@ func (metadata *Metadata) AddDate(date time.Time) {
 	metadata.Dates[date] = struct{}{}
 }
 
-func (metadata *Metadata) AddLink(link string) {
+func (metadata *Metadata) AddURL(rawURL string) {
+	metadata.addURL(rawURL)
+
+	u, err := url.Parse(rawURL)
+	if err != nil || u.IsAbs() {
+		return
+	}
+
+	u.Fragment = ""
+	rawURL = u.String()
+	if rawURL == "" {
+		return
+	}
+
+	if path.Ext(rawURL) == "" {
+		rawURL = rawURL + ".md"
+	}
+
+	metadata.addLink(rawURL)
+}
+
+func (metadata *Metadata) addLink(link string) {
 	if metadata.Links == nil {
 		metadata.Links = make(map[string]struct{})
 	}
 
 	metadata.Links[link] = struct{}{}
+}
+
+func (metadata *Metadata) addURL(url string) {
+	if metadata.URLs == nil {
+		metadata.URLs = make(map[string]struct{})
+	}
+
+	metadata.URLs[url] = struct{}{}
+}
+
+func (metadata *Metadata) AddSection(section string) {
+	if metadata.Sections == nil {
+		metadata.Sections = make(map[string]struct{})
+	}
+
+	metadata.Sections[section] = struct{}{}
 }
 
 func (metadata *Metadata) AddTag(tag string) {

@@ -12,6 +12,8 @@ type Entry struct {
 	Dates      []time.Time            `json:"dates,omitempty"      yaml:"dates,omitempty"`
 	Links      []string               `json:"links,omitempty"      yaml:"links,omitempty"`
 	Backlinks  []string               `json:"backlinks,omitempty"  yaml:"backlinks,omitempty"`
+	URLs       []string               `json:"urls,omitempty"       yaml:"urls,omitempty"`
+	Sections   []string               `json:"sections,omitempty"   yaml:"sections,omitempty"`
 	Tags       []string               `json:"tags,omitempty"       yaml:"tags,omitempty"`
 	Tasks      []string               `json:"tasks,omitempty"      yaml:"tasks,omitempty"`
 	Properties map[string]interface{} `json:"properties,omitempty" yaml:"properties,omitempty"`
@@ -26,6 +28,8 @@ func NewEntry(metadata *markdown.Metadata) *Entry {
 		Names:      slices.Collect(maps.Keys(metadata.Names)),
 		Dates:      slices.Collect(maps.Keys(metadata.Dates)),
 		Links:      slices.Collect(maps.Keys(metadata.Links)),
+		URLs:       slices.Collect(maps.Keys(metadata.URLs)),
+		Sections:   slices.Collect(maps.Keys(metadata.Sections)),
 		Tags:       slices.Collect(maps.Keys(metadata.Tags)),
 		Tasks:      slices.Collect(maps.Keys(metadata.Tasks)),
 		Properties: metadata.Properties,

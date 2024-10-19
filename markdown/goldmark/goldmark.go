@@ -2,8 +2,6 @@ package goldmark
 
 import (
 	"mdvault/markdown"
-	"net/url"
-	"path"
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
@@ -50,24 +48,6 @@ func parseMarkdown(source []byte, md goldmark.Markdown) (*ast.Document, []byte, 
 	return doc, source, nil
 }
 
-func parseLink(source []byte) string {
-	u, err := url.Parse(string(source))
-	if err != nil || u.IsAbs() {
-		return ""
-	}
-
-	u.Fragment = ""
-	link := u.String()
-	if link == "" {
-		return ""
-	}
-
-	if path.Ext(link) == "" {
-		link = link + ".md"
-	}
-	return link
-}
-
 func extractMetadata(document *ast.Document, source []byte) (*markdown.Metadata, error) {
 	metadata := markdown.Metadata{}
 	metadata.SetProperties(document.Meta())
@@ -75,23 +55,28 @@ func extractMetadata(document *ast.Document, source []byte) (*markdown.Metadata,
 	title := ""
 
 	err := ast.Walk(document, func(node ast.Node, enter bool) (ast.WalkStatus, error) {
-		if title == "" {
-			if n, ok := node.(*ast.Heading); ok && n.Level == 1 && enter {
-				title = string(n.Text(source))
-				metadata.AddName(title)
+		if n, ok := node.(*ast.Heading); ok && enter {
+			section := string(n.Text(source))
+
+			metadata.AddSection(section)
+
+			if title == "" && n.Level == 1 {
+				title = section
+				metadata.AddName(section)
 			}
 		}
 
 		if n, ok := node.(*ast.Link); ok && enter {
-			if link := parseLink(n.Destination); link != "" {
-				metadata.AddLink(link)
-			}
+			metadata.AddURL(string(n.Destination))
 		}
 
 		if n, ok := node.(*wikilink.Node); ok && enter {
-			if link := parseLink(n.Target); link != "" {
-				metadata.AddLink(link)
+			link := string(n.Target)
+			if len(n.Fragment) > 0 {
+				link = link + "#" + string(n.Fragment)
 			}
+
+			metadata.AddURL(link)
 		}
 
 		if n, ok := node.(*hashtag.Node); ok && enter {
