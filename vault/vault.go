@@ -8,11 +8,14 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/rjeczalik/notify"
 )
 
 type Vault struct {
 	dir     string
 	entries map[string]*markdown.Metadata
+	watched bool
 }
 
 func NewVault(dir string) *Vault {
@@ -159,4 +162,49 @@ func shouldSkip(entry fs.DirEntry) (bool, error) {
 	}
 
 	return false, nil
+}
+
+type Event int
+
+const (
+	Create Event = iota
+	Remove
+	Write
+	Rename
+)
+
+func (vault *Vault) Watch(onEvent func(event Event, path string)) (func(), error) {
+	if vault.watched {
+		log.Fatal("Vault is already being watched")
+	}
+
+	events := make(chan notify.EventInfo, 1)
+	if err := notify.Watch(filepath.Join(vault.dir, "..."), events, notify.All); err != nil {
+		return nil, err
+	}
+
+	vault.watched = true
+
+	go func() {
+		defer notify.Stop(events)
+
+		for event := range events {
+			switch event.Event() {
+			case notify.Create:
+				onEvent(Create, event.Path())
+			case notify.Write:
+				onEvent(Write, event.Path())
+			case notify.Remove:
+				onEvent(Remove, event.Path())
+			case notify.Rename:
+				onEvent(Remove, event.Path())
+			}
+		}
+	}()
+
+	return func() {
+		close(events)
+
+		vault.watched = false
+	}, nil
 }
