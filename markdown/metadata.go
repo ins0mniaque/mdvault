@@ -134,43 +134,44 @@ func (metadata *Metadata) SetProperties(properties map[string]interface{}) {
 }
 
 func (metadata *Metadata) ExtractCommonProperties() {
-	if len(metadata.Properties) == 0 {
+	properties := metadata.Properties
+	if len(properties) == 0 {
 		return
 	}
 
-	extractProperty(metadata.Properties, "id", metadata.SetTitle)
-	extractProperty(metadata.Properties, "Id", metadata.SetTitle)
-	extractProperty(metadata.Properties, "ID", metadata.SetTitle)
+	extractProperty(properties, "id", metadata.SetTitle)
+	extractProperty(properties, "Id", metadata.SetTitle)
+	extractProperty(properties, "ID", metadata.SetTitle)
 
-	extractProperty(metadata.Properties, "name", metadata.SetTitle)
-	extractProperty(metadata.Properties, "Name", metadata.SetTitle)
-	extractProperty(metadata.Properties, "NAME", metadata.SetTitle)
+	extractProperty(properties, "name", metadata.SetTitle)
+	extractProperty(properties, "Name", metadata.SetTitle)
+	extractProperty(properties, "NAME", metadata.SetTitle)
 
-	extractProperty(metadata.Properties, "title", metadata.SetTitle)
-	extractProperty(metadata.Properties, "Title", metadata.SetTitle)
-	extractProperty(metadata.Properties, "TITLE", metadata.SetTitle)
+	extractProperty(properties, "title", metadata.SetTitle)
+	extractProperty(properties, "Title", metadata.SetTitle)
+	extractProperty(properties, "TITLE", metadata.SetTitle)
 
-	extractProperty(metadata.Properties, "alias", metadata.AddName)
-	extractProperty(metadata.Properties, "Alias", metadata.AddName)
-	extractProperty(metadata.Properties, "ALIAS", metadata.AddName)
-	extractProperty(metadata.Properties, "aliases", metadata.AddName)
-	extractProperty(metadata.Properties, "Aliases", metadata.AddName)
-	extractProperty(metadata.Properties, "ALIASES", metadata.AddName)
+	extractProperty(properties, "alias", metadata.AddName)
+	extractProperty(properties, "Alias", metadata.AddName)
+	extractProperty(properties, "ALIAS", metadata.AddName)
+	extractProperty(properties, "aliases", metadata.AddName)
+	extractProperty(properties, "Aliases", metadata.AddName)
+	extractProperty(properties, "ALIASES", metadata.AddName)
 
-	extractProperty(metadata.Properties, "date", metadata.AddDate)
-	extractProperty(metadata.Properties, "Date", metadata.AddDate)
-	extractProperty(metadata.Properties, "DATE", metadata.AddDate)
+	extractProperty(properties, "date", metadata.AddDate)
+	extractProperty(properties, "Date", metadata.AddDate)
+	extractProperty(properties, "DATE", metadata.AddDate)
 
-	extractProperty(metadata.Properties, "time", metadata.AddDate)
-	extractProperty(metadata.Properties, "Time", metadata.AddDate)
-	extractProperty(metadata.Properties, "TIME", metadata.AddDate)
+	extractProperty(properties, "time", metadata.AddDate)
+	extractProperty(properties, "Time", metadata.AddDate)
+	extractProperty(properties, "TIME", metadata.AddDate)
 
-	extractProperty(metadata.Properties, "tag", metadata.AddTag)
-	extractProperty(metadata.Properties, "Tag", metadata.AddTag)
-	extractProperty(metadata.Properties, "TAG", metadata.AddTag)
-	extractProperty(metadata.Properties, "tags", metadata.AddTag)
-	extractProperty(metadata.Properties, "Tags", metadata.AddTag)
-	extractProperty(metadata.Properties, "TAGS", metadata.AddTag)
+	extractProperty(properties, "tag", metadata.AddTag)
+	extractProperty(properties, "Tag", metadata.AddTag)
+	extractProperty(properties, "TAG", metadata.AddTag)
+	extractProperty(properties, "tags", metadata.AddTag)
+	extractProperty(properties, "Tags", metadata.AddTag)
+	extractProperty(properties, "TAGS", metadata.AddTag)
 }
 
 func extractProperty[V any](properties map[string]interface{}, key string, fn func(s V)) {
