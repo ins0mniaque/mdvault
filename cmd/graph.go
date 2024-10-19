@@ -59,18 +59,18 @@ func printMermaidGraph(entries map[string]*vault.Entry) {
 		printLinkVertices("  %s\n", entries)
 	}
 	if graphLinks {
-		printLinkVertices("  click %[1]s \"%[1]s\" \"%[1]s\"\n", entries)
+		printLinkVertices("  click %[1]s %[1]q %[1]q\n", entries)
 	}
 }
 
 func printDotGraph(name string, entries map[string]*vault.Entry) {
 	fmt.Printf("digraph %s {\n", name)
-	printLinkEdges("%s -> %s\n", entries)
+	printLinkEdges("%q -> %q\n", entries)
 	if graphTags {
-		printTagEdges("%s -> %s\n", entries)
+		printTagEdges("%q -> %q\n", entries)
 	}
 	if graphIsolatedVertices {
-		printLinkVertices("%s\n", entries)
+		printLinkVertices("%q\n", entries)
 	}
 	println("}")
 }
