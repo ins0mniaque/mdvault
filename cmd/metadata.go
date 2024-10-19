@@ -18,7 +18,10 @@ var metadataCmd = &cobra.Command{
 	Long:    "Extract vault metadata in JSON or YAML format",
 	Run: func(cmd *cobra.Command, args []string) {
 		v := vault.NewVault(vaultDir)
-		v.Load()
+
+		if err := v.Load(); err != nil {
+			log.Fatalf("Error loading vault %s: %s", v.Dir(), err)
+		}
 
 		if metadataFormat == "json" {
 			json, err := json.Marshal(v.Entries())

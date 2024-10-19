@@ -21,7 +21,10 @@ var graphCmd = &cobra.Command{
 	Long:    "Generate vault graph in Markdown, Mermaid or GraphViz DOT format",
 	Run: func(cmd *cobra.Command, args []string) {
 		v := vault.NewVault(vaultDir)
-		v.Load()
+
+		if err := v.Load(); err != nil {
+			log.Fatalf("Error loading vault %s: %s", v.Dir(), err)
+		}
 
 		entries := v.Entries()
 
