@@ -35,7 +35,7 @@ var metadataCmd = &cobra.Command{
 
 			println(string(yaml))
 		} else {
-			log.Fatalf("Invalid format: %s. Available formats: json|yaml\n", metadataFormat)
+			log.Fatalf("Invalid format: %s. Available formats: json|yaml", metadataFormat)
 		}
 	},
 }

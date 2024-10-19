@@ -34,12 +34,11 @@ var graphCmd = &cobra.Command{
 		} else if graphFormat == "dot" {
 			printDotGraph(filepath.Base(v.Dir()), entries)
 		} else {
-			log.Fatalf("Invalid format: %s. Available formats: markdown|mermaid|dot\n", graphFormat)
+			log.Fatalf("Invalid format: %s. Available formats: markdown|mermaid|dot", graphFormat)
 		}
 	},
 }
 
-// TODO: Add option for links, tags and isolated vertices
 func init() {
 	graphCmd.Flags().StringVarP(&graphFormat, "format", "f", "markdown", "Output format: markdown|mermaid|dot")
 	graphCmd.Flags().BoolVarP(&graphIsolatedVertices, "isolated", "i", false, "Output format: markdown|mermaid|dot")
@@ -59,6 +58,7 @@ func printMermaidGraph(entries map[string]*vault.Entry) {
 		printLinkVertices("  %s\n", entries)
 	}
 	if graphLinks {
+		// TODO: Remove isolated vertices if graphIsolatedVertices is false
 		printLinkVertices("  click %[1]s %[1]q %[1]q\n", entries)
 	}
 }

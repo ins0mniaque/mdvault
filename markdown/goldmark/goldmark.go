@@ -19,8 +19,8 @@ type Parser struct {
 	md goldmark.Markdown
 }
 
-func (r Parser) Parse(source []byte) (*markdown.Metadata, error) {
-	document, source, err := parseMarkdown(source, r.md)
+func (parser Parser) Parse(source []byte) (*markdown.Metadata, error) {
+	document, source, err := parseMarkdown(source, parser.md)
 	if err != nil {
 		return nil, err
 	}
