@@ -62,7 +62,7 @@ func extractMetadata(document *ast.Document, source []byte) (*markdown.Metadata,
 
 			if title == "" && n.Level == 1 {
 				title = section
-				metadata.AddName(section)
+				metadata.SetTitle(title)
 			}
 		}
 

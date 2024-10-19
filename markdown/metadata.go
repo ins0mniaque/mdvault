@@ -3,6 +3,9 @@ package markdown
 import (
 	"net/url"
 	"path"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -33,16 +36,35 @@ func (metadata *Metadata) AddDate(date time.Time) {
 	metadata.Dates[date] = struct{}{}
 }
 
+var dateRegexp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}|\d{8}`)
+
+func parseDateMatch(match string) (time.Time, error) {
+	layout := "2006-01-02"
+	if len(match) == 8 {
+		layout = "20060102"
+	}
+
+	return time.Parse(layout, match)
+}
+
+func (metadata *Metadata) addDatesFrom(value string) {
+	for _, match := range dateRegexp.FindAllString(value, -1) {
+		if date, err := parseDateMatch(match); err == nil {
+			metadata.AddDate(date)
+		}
+	}
+}
+
 func (metadata *Metadata) AddURL(rawURL string) {
 	metadata.addURL(rawURL)
 
-	u, err := url.Parse(rawURL)
-	if err != nil || u.IsAbs() {
+	URL, err := url.Parse(rawURL)
+	if err != nil || URL.IsAbs() {
 		return
 	}
 
-	u.Fragment = ""
-	rawURL = u.String()
+	URL.Fragment = ""
+	rawURL = URL.String()
 	if rawURL == "" {
 		return
 	}
@@ -95,8 +117,16 @@ func (metadata *Metadata) AddTask(task string) {
 }
 
 func (metadata *Metadata) SetPath(path string) {
-	// TODO: Extract date/name from path
-	metadata.AddName(path)
+	name := filepath.Base(path)
+	name = strings.TrimSuffix(name, filepath.Ext(name))
+
+	metadata.AddName(name)
+	metadata.addDatesFrom(path)
+}
+
+func (metadata *Metadata) SetTitle(title string) {
+	metadata.AddName(title)
+	metadata.addDatesFrom(title)
 }
 
 func (metadata *Metadata) SetProperties(properties map[string]interface{}) {
@@ -104,13 +134,21 @@ func (metadata *Metadata) SetProperties(properties map[string]interface{}) {
 }
 
 func (metadata *Metadata) ExtractCommonProperties() {
-	if metadata.Properties == nil {
+	if len(metadata.Properties) == 0 {
 		return
 	}
 
-	extractProperty(metadata.Properties, "id", metadata.AddName)
-	extractProperty(metadata.Properties, "Id", metadata.AddName)
-	extractProperty(metadata.Properties, "ID", metadata.AddName)
+	extractProperty(metadata.Properties, "id", metadata.SetTitle)
+	extractProperty(metadata.Properties, "Id", metadata.SetTitle)
+	extractProperty(metadata.Properties, "ID", metadata.SetTitle)
+
+	extractProperty(metadata.Properties, "name", metadata.SetTitle)
+	extractProperty(metadata.Properties, "Name", metadata.SetTitle)
+	extractProperty(metadata.Properties, "NAME", metadata.SetTitle)
+
+	extractProperty(metadata.Properties, "title", metadata.SetTitle)
+	extractProperty(metadata.Properties, "Title", metadata.SetTitle)
+	extractProperty(metadata.Properties, "TITLE", metadata.SetTitle)
 
 	extractProperty(metadata.Properties, "alias", metadata.AddName)
 	extractProperty(metadata.Properties, "Alias", metadata.AddName)
