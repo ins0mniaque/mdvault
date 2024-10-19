@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var format string
+var metadataFormat string
 
 var metadataCmd = &cobra.Command{
 	Use:     "metadata",
@@ -20,14 +20,14 @@ var metadataCmd = &cobra.Command{
 		v := vault.NewVault(vaultDir)
 		v.Load()
 
-		if format == "json" {
+		if metadataFormat == "json" {
 			json, err := json.Marshal(v.Entries())
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			println(string(json))
-		} else if format == "yaml" {
+		} else if metadataFormat == "yaml" {
 			yaml, err := yaml.Marshal(v.Entries())
 			if err != nil {
 				log.Fatal(err)
@@ -35,13 +35,13 @@ var metadataCmd = &cobra.Command{
 
 			println(string(yaml))
 		} else {
-			log.Fatalf("Invalid format: %s. Format must be json or yaml.\n", format)
+			log.Fatalf("Invalid format: %s. Available formats: json|yaml\n", metadataFormat)
 		}
 	},
 }
 
 func init() {
-	metadataCmd.Flags().StringVarP(&format, "format", "f", "yaml", "Output format: json|yaml")
+	metadataCmd.Flags().StringVarP(&metadataFormat, "format", "f", "yaml", "Output format: json|yaml")
 
 	rootCmd.AddCommand(metadataCmd)
 }
