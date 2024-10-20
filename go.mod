@@ -3,6 +3,7 @@ module mdvault
 go 1.23
 
 require (
+	github.com/BurntSushi/toml v1.2.1
 	github.com/rjeczalik/notify v0.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/yuin/goldmark v1.7.7
@@ -13,7 +14,6 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/forPelevin/gomoji v1.1.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
