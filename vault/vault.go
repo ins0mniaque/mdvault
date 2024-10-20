@@ -7,6 +7,7 @@ import (
 	"mdvault/markdown"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/rjeczalik/notify"
@@ -92,8 +93,8 @@ func (vault *Vault) Load() error {
 			key = path
 		}
 
-		ext := filepath.Ext(path)
-		if ext == ".md" || ext == ".MD" {
+		ext := strings.ToLower(filepath.Ext(path))
+		if ext == ".md" {
 			wg.Add(1)
 
 			go func(markdownPath string) {
