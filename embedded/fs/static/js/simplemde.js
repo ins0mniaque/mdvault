@@ -19,7 +19,17 @@ var editor = new SimpleMDE({
 		"link", "image", "|",
 		"preview", "side-by-side", "fullscreen", "|",
 		"guide"
-	]
+	],
+	previewRender: function(markdown, preview) {
+		clearTimeout(editor.previewRenderTimeout)
+		editor.previewRenderTimeout = setTimeout(function() {
+			renderFile(markdown, function(html) {
+				preview.innerHTML = html;
+			});
+		}, 250);
+
+		return preview.innerHTML;
+	}
 });
 
 document.addEventListener('keydown', function(e) {
