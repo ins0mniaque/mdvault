@@ -81,6 +81,8 @@ func (server *Server) Handler(writer http.ResponseWriter, request *http.Request)
 		server.delete(writer, request)
 	case "PATCH":
 		server.patch(writer, request)
+	case "POST":
+		server.post(writer, request)
 	default:
 		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -293,5 +295,24 @@ func (server *Server) patch(writer http.ResponseWriter, request *http.Request) {
 		log.Printf("Error writing file: %v", err)
 		http.Error(writer, "Failed to write file", http.StatusInternalServerError)
 		return
+	}
+}
+
+func (server *Server) post(writer http.ResponseWriter, request *http.Request) {
+	if request.URL.Path != "/" {
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	query := request.URL.Query()
+
+	if _, ok := query["render"]; ok {
+		err := server.renderer.Render(request.Body, writer)
+		if err != nil {
+			log.Printf("Error rendering markdown: %v", err)
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+		}
+	} else {
+		http.NotFound(writer, request)
 	}
 }

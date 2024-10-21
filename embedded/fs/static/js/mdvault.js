@@ -34,3 +34,16 @@ function deleteFile(editor) {
 		alert('Error deleting file: ' + error);
 	});
 }
+
+function renderFile(markdown, onrendered) {
+	fetch(window.location.origin + '?render', {
+		method: 'POST',
+		headers: { 'Content-Type': 'text/markdown' },
+		body: markdown
+	})
+	.then((response) => response.text())
+	.then((html) => onrendered(html))
+	.catch((error) => {
+		alert('Error rendering file: ' + error);
+	});
+}
