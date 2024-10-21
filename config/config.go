@@ -59,12 +59,9 @@ func ConfigureEditorTemplate() (*template.Template, error) {
 	<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
 </head>
 <body>
-	<textarea></textarea>
-	<button id="save-button">Save</button>
-	<button id="delete-button">Delete</button>
-	<script>var editor = new SimpleMDE(); editor.value({{ .Markdown }});</script>
+	<textarea id="editor"></textarea>
 	<script>
-		document.getElementById('save-button').addEventListener('click', function() {
+		function saveFile(editor) {
 			fetch(window.location.href, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'text/markdown' },
@@ -73,10 +70,9 @@ func ConfigureEditorTemplate() (*template.Template, error) {
 			.catch((error) => {
 				alert('Error saving file: ' + error);
 			});
-		});
-	</script>
-	<script>
-		document.getElementById('delete-button').addEventListener('click', function() {
+		}
+
+		function deleteFile(editor) {
 			fetch(window.location.href, {
 				method: 'DELETE'
 			})
@@ -86,7 +82,41 @@ func ConfigureEditorTemplate() (*template.Template, error) {
 			.catch((error) => {
 				alert('Error deleting file: ' + error);
 			});
+		}
+
+		var editor = new SimpleMDE({
+			element: document.getElementById('editor'),
+			toolbar: [
+				{
+					name: "save",
+					action: saveFile,
+					className: "fa fa-save",
+					title: "Save",
+				},
+				{
+					name: "delete",
+					action: deleteFile,
+					className: "fa fa-trash",
+					title: "Delete",
+				},
+				"|",
+				"bold", "italic", "heading", "|",
+				"quote", "unordered-list", "ordered-list", "|",
+				"link", "image", "|",
+				"preview", "side-by-side", "fullscreen", "|",
+				"guide"
+			]
 		});
+
+		document.addEventListener('keydown', function(e) {
+			if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+				e.preventDefault();
+
+				saveFile(editor);
+			}
+		});
+
+	 	editor.value({{ .Markdown }});
 	</script>
 </body>
 </html>

@@ -125,7 +125,6 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 
 	if err != nil && os.IsNotExist(err) && ext == ".html" {
 		path = path[:len(path)-len(ext)] + ".md"
-
 		file, err = os.Open(path)
 	}
 
