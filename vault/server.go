@@ -2,6 +2,7 @@ package vault
 
 import (
 	"html/template"
+	"io"
 	"log"
 	"mdvault/config"
 	"mdvault/markdown"
@@ -9,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 type Server struct {
@@ -57,32 +60,54 @@ type RenderPage struct {
 func (server *Server) Handler(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case "HEAD":
-		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		server.head(writer, request)
 	case "GET":
-		server.render(writer, request)
+		server.get(writer, request)
 	case "PUT":
-		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		server.put(writer, request)
 	case "DELETE":
-		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		server.delete(writer, request)
 	case "PATCH":
-		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		server.patch(writer, request)
 	default:
 		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (server *Server) render(writer http.ResponseWriter, request *http.Request) {
-	filename := filepath.Join(server.Vault.Dir(), request.URL.Path)
-	ext := strings.ToLower(filepath.Ext(filename))
+func (server *Server) head(writer http.ResponseWriter, request *http.Request) {
+	path := filepath.Join(server.Vault.Dir(), request.URL.Path)
+	ext := strings.ToLower(filepath.Ext(path))
+
+	_, err := os.Stat(path)
+	if err != nil && os.IsNotExist(err) && ext == ".html" {
+		path = path[:len(path)-len(ext)] + ".md"
+		ext = ".md"
+		_, err = os.Stat(path)
+	}
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.NotFound(writer, request)
+		} else {
+			log.Printf("Error checking file: %v", err)
+			http.Error(writer, "Failed to check file", http.StatusInternalServerError)
+		}
+		return
+	}
+}
+
+func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
+	path := filepath.Join(server.Vault.Dir(), request.URL.Path)
+	ext := strings.ToLower(filepath.Ext(path))
 	render := false
 
-	data, err := os.ReadFile(filename)
+	data, err := os.ReadFile(path)
 	if err != nil && os.IsNotExist(err) && ext == ".html" {
-		filename = filename[:len(filename)-len(ext)] + ".md"
+		path = path[:len(path)-len(ext)] + ".md"
 		ext = ".md"
 		render = true
 
-		data, err = os.ReadFile(filename)
+		data, err = os.ReadFile(path)
 	}
 
 	if err != nil {
@@ -90,13 +115,13 @@ func (server *Server) render(writer http.ResponseWriter, request *http.Request) 
 			http.NotFound(writer, request)
 		} else {
 			log.Printf("Error reading file: %v", err)
-			http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+			http.Error(writer, "Failed to read file", http.StatusInternalServerError)
 		}
 		return
 	}
 
 	if render {
-		title := strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
+		title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 		html := new(strings.Builder)
 		err := server.renderer.Render(data, html)
 		if err != nil {
@@ -114,7 +139,7 @@ func (server *Server) render(writer http.ResponseWriter, request *http.Request) 
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
 	} else if ext == ".md" {
-		title := strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
+		title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 		js := template.JSEscapeString(string(data))
 
 		page := EditorPage{
@@ -132,5 +157,107 @@ func (server *Server) render(writer http.ResponseWriter, request *http.Request) 
 			log.Printf("Error rendering resource: %v", err)
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
+	}
+}
+
+func (server *Server) put(writer http.ResponseWriter, request *http.Request) {
+	path := filepath.Join(server.Vault.Dir(), request.URL.Path)
+	ext := strings.ToLower(filepath.Ext(path))
+
+	if ext != ".md" {
+		http.Error(writer, "Only markdown files are allowed", http.StatusForbidden)
+		return
+	}
+
+	file, err := os.Create(path)
+	if err != nil {
+		log.Printf("Error creating file: %v", err)
+		http.Error(writer, "Failed to create file", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, request.Body)
+	if err != nil {
+		log.Printf("Error writing file: %v", err)
+		http.Error(writer, "Failed to write file", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (server *Server) delete(writer http.ResponseWriter, request *http.Request) {
+	path := filepath.Join(server.Vault.Dir(), request.URL.Path)
+	ext := strings.ToLower(filepath.Ext(path))
+
+	if ext != ".md" {
+		http.Error(writer, "Only markdown files are allowed", http.StatusForbidden)
+		return
+	}
+
+	err := os.Remove(path)
+	if err != nil {
+		http.Error(writer, "File not found or failed to delete file", http.StatusNotFound)
+		return
+	}
+}
+
+func (server *Server) patch(writer http.ResponseWriter, request *http.Request) {
+	path := filepath.Join(server.Vault.Dir(), request.URL.Path)
+	ext := strings.ToLower(filepath.Ext(path))
+
+	if ext != ".md" {
+		http.Error(writer, "Only markdown files are allowed", http.StatusForbidden)
+		return
+	}
+
+	builder := new(strings.Builder)
+	_, err := io.Copy(builder, request.Body)
+	if err != nil {
+		log.Printf("Error reading patch: %v", err)
+		http.Error(writer, "Failed to read patch", http.StatusInternalServerError)
+		return
+	}
+
+	dmp := diffmatchpatch.New()
+	patches, err := dmp.PatchFromText(builder.String())
+	if err != nil {
+		log.Printf("Invalid patch: %v", err)
+		http.Error(writer, "Invalid patch", http.StatusInternalServerError)
+		return
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.NotFound(writer, request)
+		} else {
+			log.Printf("Error reading file: %v", err)
+			http.Error(writer, "Failed to read file", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	patched, applieds := dmp.PatchApply(patches, string(data))
+	for _, applied := range applieds {
+		if !applied {
+			log.Printf("Error applying patch: %v", err)
+			http.Error(writer, "Failed to apply patch", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	file, err := os.Create(path)
+	if err != nil {
+		log.Printf("Error creating file: %v", err)
+		http.Error(writer, "Failed to create file", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	_, err = file.Write([]byte(patched))
+	if err != nil {
+		log.Printf("Error writing file: %v", err)
+		http.Error(writer, "Failed to write file", http.StatusInternalServerError)
+		return
 	}
 }
