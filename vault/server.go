@@ -15,16 +15,23 @@ import (
 )
 
 type Server struct {
-	Vault          *Vault
-	renderer       markdown.Renderer
-	editorTemplate *template.Template
-	renderTemplate *template.Template
+	Vault           *Vault
+	renderer        markdown.Renderer
+	creatorTemplate *template.Template
+	editorTemplate  *template.Template
+	renderTemplate  *template.Template
 }
 
 func NewServer(vault *Vault) (*Server, error) {
 	renderer, err := config.ConfigureRenderer()
 	if err != nil {
 		log.Printf("Error configuring renderer for vault %s: %v\n", vault.Dir(), err)
+		return nil, err
+	}
+
+	creatorTemplate, err := config.ConfigureCreatorTemplate()
+	if err != nil {
+		log.Printf("Error configuring creator template for vault %s: %v\n", vault.Dir(), err)
 		return nil, err
 	}
 
@@ -41,10 +48,15 @@ func NewServer(vault *Vault) (*Server, error) {
 	}
 
 	return &Server{
-		Vault:          vault,
-		renderer:       renderer,
-		editorTemplate: editorTemplate,
-		renderTemplate: renderTemplate}, nil
+		Vault:           vault,
+		renderer:        renderer,
+		creatorTemplate: creatorTemplate,
+		editorTemplate:  editorTemplate,
+		renderTemplate:  renderTemplate}, nil
+}
+
+type CreatorPage struct {
+	Title string
 }
 
 type EditorPage struct {
@@ -81,7 +93,6 @@ func (server *Server) head(writer http.ResponseWriter, request *http.Request) {
 	_, err := os.Stat(path)
 	if err != nil && os.IsNotExist(err) && ext == ".html" {
 		path = path[:len(path)-len(ext)] + ".md"
-		ext = ".md"
 		_, err = os.Stat(path)
 	}
 
@@ -104,7 +115,6 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 	file, err := os.Open(path)
 	if err != nil && os.IsNotExist(err) && ext == ".html" {
 		path = path[:len(path)-len(ext)] + ".md"
-		ext = ".md"
 		render = true
 
 		file, err = os.Open(path)
@@ -112,7 +122,18 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			http.NotFound(writer, request)
+			if ext == ".md" {
+				title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+				page := CreatorPage{Title: title}
+
+				err := server.creatorTemplate.Execute(writer, page)
+				if err != nil {
+					log.Printf("Error rendering template: %v", err)
+					http.Error(writer, err.Error(), http.StatusInternalServerError)
+				}
+			} else {
+				http.NotFound(writer, request)
+			}
 		} else {
 			log.Printf("Error reading file: %v", err)
 			http.Error(writer, "Failed to read file", http.StatusInternalServerError)

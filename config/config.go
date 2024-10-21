@@ -17,6 +17,37 @@ func ConfigureRenderer() (markdown.Renderer, error) {
 }
 
 // TODO: Read template from vault config
+func ConfigureCreatorTemplate() (*template.Template, error) {
+	return template.New("creator").Parse(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>{{ .Title }}</title>
+</head>
+<body>
+	<button id="create-button">Create {{ .Title }}</button>
+	<script>
+		document.getElementById('create-button').addEventListener('click', function() {
+			fetch(window.location.href, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'text/markdown' },
+				body: ''
+			})
+			.then(() => {
+				window.location.reload();
+			})
+			.catch((error) => {
+				alert('Error creating file: ' + error);
+			});
+		});
+	</script>
+</body>
+</html>
+`)
+}
+
+// TODO: Read template from vault config
 func ConfigureEditorTemplate() (*template.Template, error) {
 	return template.New("editor").Parse(`
 <!DOCTYPE html>
@@ -50,7 +81,7 @@ func ConfigureEditorTemplate() (*template.Template, error) {
 				method: 'DELETE'
 			})
 			.then(() => {
-				window.location.href = window.location.origin;
+				window.location.reload();
 			})
 			.catch((error) => {
 				alert('Error deleting file: ' + error);
