@@ -8,13 +8,14 @@
 	<link rel="icon" type="image/x-icon" href="/favicon.ico">
 	<link rel="manifest" href="/site.webmanifest">
 	<title>{{ .Title }}</title>
-	<link rel="stylesheet" href="/static/lib/simplemde/simplemde.min.css">
-	<script src="/static/lib/simplemde/simplemde.min.js"></script>
+	<link rel="stylesheet" href="/static/lib/easymde/easymde.min.css">
+	<script src="/static/lib/easymde/easymde.min.js"></script>
 	<script src="/static/js/mdvault.js"></script>
+	<style>.cm-comment { font-family: Monospace; }</style>
 </head>
 <body>
 	<textarea id="editor"></textarea>
-	<script src="/static/js/simplemde.js"></script>
+	<script src="/static/js/easymde.js"></script>
 	<script>editor.value({{ .Markdown }});</script>
 </body>
 </html>

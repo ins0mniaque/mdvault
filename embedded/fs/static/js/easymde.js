@@ -1,4 +1,5 @@
-var editor = new SimpleMDE({
+var editor = new EasyMDE({
+	autofocus: true,
 	element: document.getElementById('editor'),
 	toolbar: [
 		{
