@@ -110,12 +110,21 @@ func (server *Server) head(writer http.ResponseWriter, request *http.Request) {
 func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 	path := filepath.Join(server.Vault.Dir(), request.URL.Path)
 	ext := strings.ToLower(filepath.Ext(path))
-	render := false
+
+	if ext != ".md" && ext != ".html" {
+		http.ServeFile(writer, request, path)
+		return
+	}
 
 	file, err := os.Open(path)
+	if err == nil && ext == ".html" {
+		file.Close()
+		http.ServeFile(writer, request, path)
+		return
+	}
+
 	if err != nil && os.IsNotExist(err) && ext == ".html" {
 		path = path[:len(path)-len(ext)] + ".md"
-		render = true
 
 		file, err = os.Open(path)
 	}
@@ -143,25 +152,7 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 
 	defer file.Close()
 
-	if render {
-		title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-		html := new(strings.Builder)
-		err := server.renderer.Render(file, html)
-		if err != nil {
-			log.Printf("Error rendering markdown: %v", err)
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-		}
-
-		page := RenderPage{
-			Title:    title,
-			Markdown: template.HTML(html.String())}
-
-		err = server.renderTemplate.Execute(writer, page)
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-		}
-	} else if ext == ".md" {
+	if ext == ".md" {
 		markdown := new(strings.Builder)
 		_, err = io.Copy(markdown, file)
 		if err != nil {
@@ -183,9 +174,21 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
 	} else {
-		_, err := io.Copy(writer, file)
+		title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+		html := new(strings.Builder)
+		err := server.renderer.Render(file, html)
 		if err != nil {
-			log.Printf("Error rendering resource: %v", err)
+			log.Printf("Error rendering markdown: %v", err)
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+		}
+
+		page := RenderPage{
+			Title:    title,
+			Markdown: template.HTML(html.String())}
+
+		err = server.renderTemplate.Execute(writer, page)
+		if err != nil {
+			log.Printf("Error rendering template: %v", err)
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
 	}
