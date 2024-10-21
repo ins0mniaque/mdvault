@@ -129,13 +129,15 @@ func (vault *Vault) Load() error {
 }
 
 func parse(parser markdown.Parser, key string, path string) *markdown.Metadata {
-	source, err := os.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		log.Printf("Error reading file %s: %v", key, err)
 		return nil
 	}
 
-	metadata, err := parser.Parse(source)
+	defer file.Close()
+
+	metadata, err := parser.Parse(file)
 	if err != nil {
 		log.Printf("Error extracting metadata for file %s: %v", key, err)
 		return nil

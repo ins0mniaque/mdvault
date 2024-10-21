@@ -1,5 +1,7 @@
 package markdown
 
+import "io"
+
 type Parser interface {
-	Parse(source []byte) (*Metadata, error)
+	Parse(reader io.Reader) (*Metadata, error)
 }

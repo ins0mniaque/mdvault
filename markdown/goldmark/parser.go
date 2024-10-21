@@ -1,6 +1,7 @@
 package goldmark
 
 import (
+	"io"
 	"mdvault/markdown"
 
 	"github.com/yuin/goldmark"
@@ -17,7 +18,12 @@ type Parser struct {
 	md goldmark.Markdown
 }
 
-func (parser Parser) Parse(source []byte) (*markdown.Metadata, error) {
+func (parser Parser) Parse(reader io.Reader) (*markdown.Metadata, error) {
+	source, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
 	document, source, err := parseMarkdown(source, parser.md)
 	if err != nil {
 		return nil, err

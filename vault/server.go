@@ -101,13 +101,13 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 	ext := strings.ToLower(filepath.Ext(path))
 	render := false
 
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil && os.IsNotExist(err) && ext == ".html" {
 		path = path[:len(path)-len(ext)] + ".md"
 		ext = ".md"
 		render = true
 
-		data, err = os.ReadFile(path)
+		file, err = os.Open(path)
 	}
 
 	if err != nil {
@@ -120,10 +120,12 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	defer file.Close()
+
 	if render {
 		title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 		html := new(strings.Builder)
-		err := server.renderer.Render(data, html)
+		err := server.renderer.Render(file, html)
 		if err != nil {
 			log.Printf("Error rendering markdown: %v", err)
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -139,8 +141,16 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
 	} else if ext == ".md" {
+		markdown := new(strings.Builder)
+		_, err = io.Copy(markdown, file)
+		if err != nil {
+			log.Printf("Error reading file: %v", err)
+			http.Error(writer, "Failed to read file", http.StatusInternalServerError)
+			return
+		}
+
 		title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-		js := template.JSEscapeString(string(data))
+		js := template.JSEscapeString(markdown.String())
 
 		page := EditorPage{
 			Title:    title,
@@ -152,7 +162,7 @@ func (server *Server) get(writer http.ResponseWriter, request *http.Request) {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
 	} else {
-		_, err := writer.Write(data)
+		_, err := io.Copy(writer, file)
 		if err != nil {
 			log.Printf("Error rendering resource: %v", err)
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -175,6 +185,7 @@ func (server *Server) put(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, "Failed to create file", http.StatusInternalServerError)
 		return
 	}
+
 	defer file.Close()
 
 	_, err = io.Copy(file, request.Body)

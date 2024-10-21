@@ -15,7 +15,12 @@ type Renderer struct {
 	md goldmark.Markdown
 }
 
-func (parser Renderer) Render(source []byte, writer io.Writer) error {
+func (parser Renderer) Render(reader io.Reader, writer io.Writer) error {
+	source, err := io.ReadAll(reader)
+	if err != nil {
+		return err
+	}
+
 	return parser.md.Convert(source, writer)
 }
 

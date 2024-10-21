@@ -3,5 +3,5 @@ package markdown
 import "io"
 
 type Renderer interface {
-	Render(source []byte, writer io.Writer) error
+	Render(reader io.Reader, writer io.Writer) error
 }
