@@ -5,6 +5,7 @@ import (
 	"mdvault/vault"
 	"net/http"
 
+	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 )
 
@@ -24,10 +25,15 @@ var serveCmd = &cobra.Command{
 			log.Fatalf("Error crearing server for vault %s: %s", v.Dir(), err)
 		}
 
-		http.HandleFunc("/", server.Handler)
+		addr := ":8080"
 
-		log.Println("Listening on :8080...")
-		err = http.ListenAndServe(":8080", nil)
+		mux := http.NewServeMux()
+		mux.HandleFunc("/", server.Handler)
+
+		log.Printf("Listening on %s...\n", addr)
+
+		handler := logger(cors.Default().Handler(mux))
+		err = http.ListenAndServe(addr, handler)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -36,4 +42,11 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+}
+
+func logger(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		log.Printf("%s %s %s\n", request.RemoteAddr, request.Method, request.URL)
+		handler.ServeHTTP(writer, request)
+	})
 }

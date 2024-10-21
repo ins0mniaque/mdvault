@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/rjeczalik/notify v0.9.3
+	github.com/rs/cors v1.11.1
 	github.com/spf13/cobra v1.8.1
 	github.com/yuin/goldmark v1.7.7
 	go.abhg.dev/goldmark/frontmatter v0.2.0

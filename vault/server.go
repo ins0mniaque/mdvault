@@ -55,6 +55,23 @@ type RenderPage struct {
 }
 
 func (server *Server) Handler(writer http.ResponseWriter, request *http.Request) {
+	switch request.Method {
+	case "HEAD":
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+	case "GET":
+		server.render(writer, request)
+	case "PUT":
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+	case "DELETE":
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+	case "PATCH":
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+	default:
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (server *Server) render(writer http.ResponseWriter, request *http.Request) {
 	filename := filepath.Join(server.Vault.Dir(), request.URL.Path)
 	ext := strings.ToLower(filepath.Ext(filename))
 	render := false
