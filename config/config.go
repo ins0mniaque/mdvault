@@ -19,15 +19,15 @@ func ConfigureRenderer() (markdown.Renderer, error) {
 
 // TODO: Read template from vault config
 func ConfigureCreatorTemplate() (*template.Template, error) {
-	return template.ParseFS(embedded.FS, "template/creator.tmpl")
+	return template.ParseFS(embedded.Templates, "template/creator.tmpl")
 }
 
 // TODO: Read template from vault config
 func ConfigureEditorTemplate() (*template.Template, error) {
-	return template.ParseFS(embedded.FS, "template/editor.tmpl")
+	return template.ParseFS(embedded.Templates, "template/editor.tmpl")
 }
 
 // TODO: Read template from vault config
 func ConfigureRenderTemplate() (*template.Template, error) {
-	return template.ParseFS(embedded.FS, "template/render.tmpl")
+	return template.ParseFS(embedded.Templates, "template/render.tmpl")
 }

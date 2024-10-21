@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"mdvault/embedded"
 	"mdvault/vault"
 	"net/http"
 
@@ -29,6 +30,7 @@ var serveCmd = &cobra.Command{
 
 		mux := http.NewServeMux()
 		mux.HandleFunc("/", server.Handler)
+		mux.Handle("/static/", http.FileServer(http.FS(embedded.FS)))
 
 		log.Printf("Listening on %s...\n", addr)
 
