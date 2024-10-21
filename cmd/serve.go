@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io/fs"
 	"log"
 	"mdvault/embedded"
 	"mdvault/vault"
@@ -27,10 +28,12 @@ var serveCmd = &cobra.Command{
 		}
 
 		addr := ":8080"
-
 		mux := http.NewServeMux()
 		mux.HandleFunc("/", server.Handler)
-		mux.Handle("/static/", http.FileServer(http.FS(embedded.FS)))
+
+		if err := handleFS(mux, embedded.FS); err != nil {
+			log.Fatal(err)
+		}
 
 		log.Printf("Listening on %s...\n", addr)
 
@@ -44,6 +47,24 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+}
+
+func handleFS(mux *http.ServeMux, fsys fs.FS) error {
+	entries, err := fs.ReadDir(fsys, ".")
+	if err != nil {
+		return err
+	}
+
+	fsysHandler := http.FileServer(http.FS(fsys))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			mux.Handle("/"+entry.Name()+"/", fsysHandler)
+		} else {
+			mux.Handle("/"+entry.Name(), fsysHandler)
+		}
+	}
+
+	return nil
 }
 
 func logger(handler http.Handler) http.Handler {

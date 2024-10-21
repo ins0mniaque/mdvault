@@ -1,9 +1,24 @@
 package embedded
 
-import "embed"
+import (
+	"embed"
+	"io/fs"
+	"log"
+)
 
-//go:embed static
-var FS embed.FS
+//go:embed fs
+var fsys embed.FS
+var FS = sub(fsys, "fs")
 
-//go:embed template
-var Templates embed.FS
+//go:embed templates
+var templates embed.FS
+var Templates = sub(templates, "templates")
+
+func sub(fsys fs.FS, dir string) fs.FS {
+	subFsys, err := fs.Sub(fsys, dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return subFsys
+}
