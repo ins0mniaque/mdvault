@@ -29,7 +29,34 @@ func ConfigureEditorTemplate() (*template.Template, error) {
 </head>
 <body>
 	<textarea></textarea>
+	<button id="save-button">Save</button>
+	<button id="delete-button">Delete</button>
 	<script>var editor = new SimpleMDE(); editor.value({{ .Markdown }});</script>
+	<script>
+		document.getElementById('save-button').addEventListener('click', function() {
+			fetch(window.location.href, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'text/markdown' },
+				body: editor.value()
+			})
+			.catch((error) => {
+				alert('Error saving file: ' + error);
+			});
+		});
+	</script>
+	<script>
+		document.getElementById('delete-button').addEventListener('click', function() {
+			fetch(window.location.href, {
+				method: 'DELETE'
+			})
+			.then(() => {
+				window.location.href = window.location.origin;
+			})
+			.catch((error) => {
+				alert('Error deleting file: ' + error);
+			});
+		});
+	</script>
 </body>
 </html>
 `)
