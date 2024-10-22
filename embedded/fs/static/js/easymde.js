@@ -29,7 +29,7 @@ var editor = new EasyMDE({
 			});
 		}, 250);
 
-		return preview.innerHTML;
+		return null;
 	}
 });
 
