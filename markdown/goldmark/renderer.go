@@ -4,8 +4,10 @@ import (
 	"io"
 	"mdvault/markdown"
 
+	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	mathjax "github.com/litao91/goldmark-mathjax"
 	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
 	"go.abhg.dev/goldmark/frontmatter"
 	"go.abhg.dev/goldmark/hashtag"
@@ -32,6 +34,12 @@ func NewRenderer() markdown.Renderer {
 			extension.TaskList,
 			&frontmatter.Extender{Mode: frontmatter.SetMetadata},
 			&hashtag.Extender{Variant: hashtag.ObsidianVariant},
+			highlighting.NewHighlighting(
+				highlighting.WithStyle("monokai"),
+				highlighting.WithFormatOptions(
+					chromahtml.WithLineNumbers(true),
+				),
+			),
 			mathjax.MathJax,
 			&mermaid.Extender{RenderMode: mermaid.RenderModeClient, NoScript: true},
 			&wikilink.Extender{}))}
