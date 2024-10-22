@@ -31,7 +31,9 @@ func (parser Renderer) Render(reader io.Reader, writer io.Writer) error {
 func NewRenderer() markdown.Renderer {
 	return Renderer{md: goldmark.New(
 		goldmark.WithExtensions(
-			extension.TaskList,
+			extension.GFM,
+			extension.DefinitionList,
+			extension.Footnote,
 			&frontmatter.Extender{Mode: frontmatter.SetMetadata},
 			&hashtag.Extender{Variant: hashtag.ObsidianVariant},
 			highlighting.NewHighlighting(
