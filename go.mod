@@ -10,6 +10,7 @@ require (
 	github.com/rs/cors v1.11.1
 	github.com/sergi/go-diff v1.3.1
 	github.com/spf13/cobra v1.8.1
+	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/yuin/goldmark v1.7.7
 	github.com/yuin/goldmark-emoji v1.0.4
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
