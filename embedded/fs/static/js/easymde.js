@@ -25,7 +25,7 @@ var editor = new EasyMDE({
 		clearTimeout(editor.previewRenderTimeout)
 		editor.previewRenderTimeout = setTimeout(function() {
 			renderFile(markdown, function(html) {
-				preview.innerHTML = html;
+				setRenderedHTML(preview, html);
 			});
 		}, 250);
 
