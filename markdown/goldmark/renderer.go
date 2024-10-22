@@ -7,6 +7,7 @@ import (
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	mathjax "github.com/litao91/goldmark-mathjax"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark-emoji"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
 	"go.abhg.dev/goldmark/frontmatter"
@@ -34,6 +35,8 @@ func NewRenderer() markdown.Renderer {
 			extension.GFM,
 			extension.DefinitionList,
 			extension.Footnote,
+			extension.CJK,
+			emoji.Emoji,
 			&frontmatter.Extender{Mode: frontmatter.SetMetadata},
 			&hashtag.Extender{Variant: hashtag.ObsidianVariant},
 			highlighting.NewHighlighting(
