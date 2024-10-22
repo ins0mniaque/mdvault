@@ -7,9 +7,10 @@ import (
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	mathjax "github.com/litao91/goldmark-mathjax"
 	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark-emoji"
+	emoji "github.com/yuin/goldmark-emoji"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
 	"go.abhg.dev/goldmark/frontmatter"
 	"go.abhg.dev/goldmark/hashtag"
 	"go.abhg.dev/goldmark/mermaid"
@@ -47,5 +48,8 @@ func NewRenderer() markdown.Renderer {
 			),
 			mathjax.MathJax,
 			&mermaid.Extender{RenderMode: mermaid.RenderModeClient, NoScript: true},
-			&wikilink.Extender{}))}
+			&wikilink.Extender{}),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		))}
 }
