@@ -11,7 +11,7 @@ var mdvault = (function() {
 			window.location.reload();
 		})
 		.catch(error => {
-			alert('Error creating file: ' + error);
+			Swal.fire({ icon: 'error', title: 'Error creating file', text: error });
 		});
 	}
 
@@ -21,8 +21,11 @@ var mdvault = (function() {
 			headers: { 'Content-Type': 'text/markdown' },
 			body: markdown
 		})
+		.then(() => {
+			Swal.fire({ icon: 'success', title: 'Saved', position: 'top-end', showConfirmButton: false, timer: 1500 })
+		})
 		.catch(error => {
-			alert('Error saving file: ' + error);
+			Swal.fire({ icon: 'error', title: 'Error saving file', text: error });
 		});
 	}
 
@@ -34,7 +37,7 @@ var mdvault = (function() {
 			window.location.reload();
 		})
 		.catch(error => {
-			alert('Error deleting file: ' + error);
+			Swal.fire({ icon: 'error', title: 'Error deleting file', text: error, icon: 'error' });
 		});
 	}
 
@@ -47,7 +50,7 @@ var mdvault = (function() {
 		.then(response => response.text())
 		.then(html => onrendered(html))
 		.catch(error => {
-			alert('Error rendering file: ' + error);
+			Swal.fire({ icon: 'error', title: 'Error rendering markdown', text: error, position: 'top-end', showConfirmButton: false, timer: 1500 })
 		});
 	}
 
