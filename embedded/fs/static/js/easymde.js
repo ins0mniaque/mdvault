@@ -4,13 +4,13 @@ var editor = new EasyMDE({
 	toolbar: [
 		{
 			name: "save",
-			action: function(editor) { saveFile(editor.value()); },
+			action: function(editor) { mdvault.save(editor.value()); },
 			className: "fa fa-save",
 			title: "Save",
 		},
 		{
 			name: "delete",
-			action: function() { deleteFile(); },
+			action: function() { mdvault.delete(); },
 			className: "fa fa-trash",
 			title: "Delete",
 		},
@@ -24,8 +24,8 @@ var editor = new EasyMDE({
 	previewRender: function(markdown, preview) {
 		clearTimeout(editor.previewRenderTimeout)
 		editor.previewRenderTimeout = setTimeout(function() {
-			renderFile(markdown, function(html) {
-				setRenderedHTML(preview, html);
+			mdvault.render(markdown, function(html) {
+				mdvault.assign(preview, html);
 			});
 		}, 250);
 
@@ -37,6 +37,6 @@ document.addEventListener('keydown', function(e) {
 	if ((e.ctrlKey || e.metaKey) && e.key === 's') {
 		e.preventDefault();
 
-		saveFile(editor.value());
+		mdvault.save(editor.value());
 	}
 });
